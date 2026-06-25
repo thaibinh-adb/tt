@@ -13,7 +13,7 @@
             color: #f3f4f6; 
             overflow-x: hidden;
         }
-        
+        .tab-active { border-bottom: 3px solid #3b82f6; color: #60a5fa !important; }
         .subcontent-transition { transition: max-height 0.3s ease-out, opacity 0.2s ease-out; overflow: hidden; }
         #loading-overlay { backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
         .rotate-180 { transform: rotate(180deg); }
@@ -184,85 +184,62 @@
             return folderFriendlyNames[slug] || slug.toUpperCase().replace(/_/g, ' ');
         }
 
-        function renderInterface() {
-            MAIN_CONTENT.innerHTML = "";
-            renderGuides();
+     
+	 
+	 
+	 function renderInterface() {
+    MAIN_CONTENT.innerHTML = "";
+    renderGuides();
 
-            let categoriesSorted = Object.keys(appDataStructure);
-            if (folderCustomOrder.length > 0) {
-                categoriesSorted.sort((a, b) => {
-                    let idxA = folderCustomOrder.indexOf(a);
-                    let idxB = folderCustomOrder.indexOf(b);
-                    if (idxA === -1) idxA = 999;
-                    if (idxB === -1) idxB = 999;
-                    return idxA - idxB;
-                });
-            }
+    // 1. Tạo thanh Tabs (Phần khoanh đỏ)
+    const tabContainer = document.createElement('div');
+    tabContainer.className = "flex overflow-x-auto space-x-6 pb-4 mb-8 border-b border-gray-700";
+    
+    const categories = Object.keys(appDataStructure);
+    
+    categories.forEach((catSlug, index) => {
+        const btn = document.createElement('button');
+        btn.className = `tv-focusable text-xl font-bold text-gray-400 py-2 px-2 whitespace-nowrap ${index === 0 ? 'tab-active' : ''}`;
+        btn.innerText = getFolderName(catSlug);
+        
+        // Khi chọn Tab thì render lại nội dung
+        btn.onclick = () => {
+            document.querySelectorAll('.tab-active').forEach(el => el.classList.remove('tab-active'));
+            btn.classList.add('tab-active');
+            renderAppContent(catSlug);
+        };
+        tabContainer.appendChild(btn);
+    });
+    
+    MAIN_CONTENT.appendChild(tabContainer);
 
-            categoriesSorted.forEach((catSlug, index) => {
-                const catData = appDataStructure[catSlug];
-                const catElement = document.createElement('div');
-                catElement.className = "bg-gray-800/40 border border-gray-700 rounded-2xl shadow-xl overflow-hidden mb-6";
-                
-                catElement.innerHTML = `
-                    <button onclick="toggleAccordion('content-${index}', 'arrow-${index}')" class="tv-focusable w-full px-6 py-5 flex justify-between items-center bg-gray-800">
-                        <div class="flex items-center space-x-4">
-                            <span class="text-3xl">📁</span>
-                            <h2 class="text-2xl font-bold text-gray-100 tracking-wide">${getFolderName(catSlug)}</h2>
-                        </div>
-                        <svg id="arrow-${index}" class="w-8 h-8 text-gray-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    <div id="content-${index}" class="subcontent-transition max-h-0 opacity-0 bg-gray-900/40 root-accordion-content">
-                        <div class="p-6 space-y-6" id="container-inside-${index}"></div>
-                    </div>
-                `;
+    // Vùng chứa App
+    const appContainer = document.createElement('div');
+    appContainer.id = "app-container-view";
+    MAIN_CONTENT.appendChild(appContainer);
 
-                MAIN_CONTENT.appendChild(catElement);
-                const insideContainer = document.getElementById(`container-inside-${index}`);
+    // Render mặc định tab đầu tiên
+    renderAppContent(categories[0]);
+}
 
-                // Hiển thị file cấp 1
-                if (catData._files.length > 0) {
-                    const gridFiles = document.createElement('div');
-                    gridFiles.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6";
-                    catData._files.forEach(file => {
-                        gridFiles.appendChild(createAppCard(file));
-                    });
-                    insideContainer.appendChild(gridFiles);
-                }
-
-                // Hiển thị thư mục con (cấp 2)
-                Object.keys(catData._subs).forEach((subSlug) => {
-                    const subFiles = catData._subs[subSlug];
-                    const subWrapper = document.createElement('div');
-                    subWrapper.className = "border border-gray-700 bg-gray-800/80 rounded-2xl overflow-hidden shadow-md";
-                    
-                    subWrapper.innerHTML = `
-                        <button onclick="toggleSubAccordion('subcontent-${catSlug}-${subSlug}', 'subarrow-${catSlug}-${subSlug}', '${catSlug}')" 
-                             class="tv-focusable w-full flex justify-between items-center px-5 py-4 bg-gray-700/30">
-                            <h4 class="text-xl font-bold text-teal-400 flex items-center gap-3">
-                                <span>📂</span> ${getFolderName(subSlug)}
-                            </h4>
-                            <svg id="subarrow-${catSlug}-${subSlug}" class="w-6 h-6 text-gray-400 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="subcontent-${catSlug}-${subSlug}" class="subcontent-transition max-h-0 opacity-0 bg-gray-900/60 sub-accordion-content" data-parent="${catSlug}">
-                            <div class="p-5" id="subcontent-inside-${catSlug}-${subSlug}"></div>
-                        </div>
-                    `;
-
-                    insideContainer.appendChild(subWrapper);
-                    const subInside = document.getElementById(`subcontent-inside-${catSlug}-${subSlug}`);
-
-                    const gridSubFiles = document.createElement('div');
-                    gridSubFiles.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5";
-                    subFiles.forEach(file => { gridSubFiles.appendChild(createAppCard(file)); });
-                    subInside.appendChild(gridSubFiles);
-                });
-            });
-        }
+function renderAppContent(catSlug) {
+    const container = document.getElementById('app-container-view');
+    container.innerHTML = "";
+    
+    const catData = appDataStructure[catSlug];
+    const grid = document.createElement('div');
+    grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
+    
+    // Gộp cả file gốc và file trong thư mục con vào 1 danh sách để hiện chung
+    let allApps = [...catData._files];
+    Object.values(catData._subs).forEach(subList => allApps.push(...subList));
+    
+    allApps.forEach(file => {
+        grid.appendChild(createAppCard(file));
+    });
+    
+    container.appendChild(grid);
+}
 
         // BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
         function createAppCard(file) {
@@ -280,7 +257,7 @@
             const linkCard = document.createElement('a');
             linkCard.href = fileUrl; // Khi bấm OK trên remote, tự động bắt link tải
             linkCard.className = "tv-focusable block bg-gray-800 border border-gray-600 rounded-2xl p-4 flex items-center justify-between shadow-lg";
-            
+            linkCard.setAttribute('tabindex', '0');
             linkCard.innerHTML = `
                 <div class="flex items-center space-x-4 min-w-0 flex-1">
                     <img src="${avatarUrl}" class="w-14 h-14 rounded-xl shadow-inner object-cover" alt="Icon">
