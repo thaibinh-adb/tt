@@ -243,37 +243,49 @@ function renderAppContent(catSlug) {
 }
 
         // BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
-        function createAppCard(file) {
-            const rawFileName = file.key.split('/').pop();
-            const defaultName = rawFileName.replace(/\.apk$/i, '').replace(/_/g, ' ');
-            const cleanName = fileFriendlyNames[file.key] || defaultName;
-            
-            const initialLetter = cleanName.trim().charAt(0).toUpperCase();
-            let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(initialLetter)}&background=1e293b&color=38bdf8&bold=true&size=128`;
-            if (iconMapping[file.key]) avatarUrl = `${R2_PUBLIC_URL}/${iconMapping[file.key]}`;
-            
-            const fileCode = codeMapping[file.key] || "K có";
-            const fileUrl = `${R2_PUBLIC_URL}/${file.key}`;
+function createAppCard(file) {
+    const rawFileName = file.key.split('/').pop();
+    const defaultName = rawFileName.replace(/\.apk$/i, '').replace(/_/g, ' ');
+    const cleanName = fileFriendlyNames[file.key] || defaultName;
+    
+    const initialLetter = cleanName.trim().charAt(0).toUpperCase();
+    let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(initialLetter)}&background=1e293b&color=38bdf8&bold=true&size=128`;
+    if (iconMapping[file.key]) avatarUrl = `${R2_PUBLIC_URL}/${iconMapping[file.key]}`;
+    
+    const fileCode = codeMapping[file.key] || "K có";
+    const fileUrl = `${R2_PUBLIC_URL}/${file.key}`;
 
-            const linkCard = document.createElement('a');
-            linkCard.href = fileUrl; // Khi bấm OK trên remote, tự động bắt link tải
-            linkCard.className = "tv-focusable block bg-gray-800 border border-gray-600 rounded-2xl p-4 flex items-center justify-between shadow-lg";
-            linkCard.setAttribute('tabindex', '0');
-            linkCard.innerHTML = `
-                <div class="flex items-center space-x-4 min-w-0 flex-1">
-                    <img src="${avatarUrl}" class="w-14 h-14 rounded-xl shadow-inner object-cover" alt="Icon">
-                    <div class="min-w-0 flex-1">
-                        <h3 class="text-xl font-bold text-gray-100 truncate">${cleanName}</h3>
-                        <p class="text-sm text-gray-400 mt-1 font-mono">CODE: <span class="text-yellow-400 font-bold">${fileCode}</span></p>
-                    </div>
-                </div>
-                <div class="text-blue-500 pl-3">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                </div>
-            `;
-            return linkCard;
+    const linkCard = document.createElement('a');
+    linkCard.className = "tv-focusable block bg-gray-800 border border-gray-600 rounded-2xl p-4 flex items-center justify-between shadow-lg cursor-pointer";
+    linkCard.setAttribute('tabindex', '0');
+    linkCard.innerHTML = `
+        <div class="flex items-center space-x-4 min-w-0 flex-1">
+            <img src="${avatarUrl}" class="w-14 h-14 rounded-xl shadow-inner object-cover" alt="Icon">
+            <div class="min-w-0 flex-1">
+                <h3 class="text-xl font-bold text-gray-100 truncate">${cleanName}</h3>
+                <p class="text-sm text-gray-400 mt-1 font-mono">CODE: <span class="text-yellow-400 font-bold">${fileCode}</span></p>
+            </div>
+        </div>
+        <div class="text-blue-500 pl-3">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+    `;
+
+    // SỬA CHỖ NÀY: Bắt sự kiện khi bấm OK trên remote TV hoặc click chuột
+    linkCard.addEventListener('click', function(e) {
+        e.preventDefault(); // Chặn hành vi mở link mặc định của thẻ a
+        
+        if (window.AndroidInstaller) {
+            // Nếu đang chạy bên trong App TV của bồ, ép nó tải ngầm và tự bật cài đặt
+            window.AndroidInstaller.downloadAndInstall(fileUrl);
+        } else {
+            // Nếu đang xem bằng trình duyệt web bình thường (Chrome, Safari...) thì tải như cũ
+            window.location.href = fileUrl;
         }
+    });
 
+    return linkCard;
+}
         // HÀM MỞ THƯ MỤC
         function toggleAccordion(contentId, arrowId) {
             const content = document.getElementById(contentId);
