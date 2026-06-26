@@ -164,22 +164,29 @@
 	 
 function renderInterface() {
     const menuSide = document.getElementById('menu-side');
-    const contentSide = document.getElementById('content-side');
     menuSide.innerHTML = "";
+    const categories = Object.keys(appDataStructure);
     
-    Object.keys(appDataStructure).forEach((catSlug, index) => {
+    categories.forEach((catSlug, index) => {
         const btn = document.createElement('button');
         btn.className = "tv-focusable menu-item w-full text-left";
         btn.innerText = getFolderName(catSlug);
         btn.setAttribute('tabindex', '0');
         
-        // Khi nhấn vào menu hoặc focus vào
         btn.onfocus = () => {
-            renderAppContent(catSlug); // Tự động load nội dung bên phải
+            renderAppContent(catSlug);
         };
         
         menuSide.appendChild(btn);
     });
+
+    // MỚI: Tự động focus vào nút đầu tiên sau khi tạo xong
+    if (categories.length > 0) {
+        const firstBtn = menuSide.querySelector('.menu-item');
+        if (firstBtn) {
+            firstBtn.focus(); // Cái này sẽ kích hoạt luôn hàm renderAppContent
+        }
+    }
 }
 
 function renderAppContent(catSlug) {
