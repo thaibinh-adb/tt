@@ -1,35 +1,34 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-	<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kho Ứng Dụng ATV</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        /* TỐI ƯU GIAO DIỆN DÀNH RIÊNG CHO TIVI */
+        /* TỐI ƯU TOÀN MÀN HÌNH CHO ANDROID TV */
         body { 
             font-family: "Segoe UI", Roboto, Arial, sans-serif; 
-            background-color: #0f172a; /* Nền tối dịu mắt cho TV */
+            background-color: #0f172a; /* Nền tối chuẩn TV */
             color: #f3f4f6; 
-            overflow-x: hidden;
+            overflow: hidden; /* Khóa cuộn trang chính, chỉ cuộn nội bộ từng cột */
         }
-        .tab-active { border-bottom: 3px solid #3b82f6; color: #60a5fa !important; }
-        .subcontent-transition { transition: max-height 0.3s ease-out, opacity 0.2s ease-out; overflow: hidden; }
-        #loading-overlay { backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
-        .rotate-180 { transform: rotate(180deg); }
 
-        /* HIỆU ỨNG KHI DÙNG REMOTE CHỌN TRÚNG (FOCUS) - QUAN TRỌNG NHẤT */
+        #loading-overlay { backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+
+        /* HIỆU ỨNG FOCUS REMOTE KIỂU NETFLIX */
         .tv-focusable {
             transition: all 0.2s ease-in-out;
-            outline: none; /* Bỏ viền mặc định xấu xí của trình duyệt */
+            outline: none;
+            border: 2px solid transparent;
         }
         
         .tv-focusable:focus {
-            transform: scale(1.05);
+            transform: scale(1.04);
             border-color: #3b82f6 !important;
-            background-color: #1e3a8a !important; /* Xanh dương đậm tỏa sáng */
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.8) !important;
+            background-color: #2563eb !important; /* Xanh dương nổi bật khi chọn */
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6) !important;
             z-index: 10;
         }
 
@@ -37,43 +36,61 @@
             color: #ffffff !important;
         }
 
-        /* Ẩn thanh cuộn cho đẹp trên TV */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        /* Trạng thái Menu đang được chọn nhưng đang hover/focus bên vùng App */
+        .menu-active:not(:focus) {
+            background-color: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            color: #60a5fa !important;
+        }
+
+        /* Ẩn thanh cuộn mặc định và làm mượt mà cho TV */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="min-h-screen pb-16">
+<body class="h-screen w-screen flex flex-col p-6 overflow-hidden">
 
     <div id="loading-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90">
         <svg class="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p class="text-lg font-bold text-blue-400">Đang tải dữ liệu, vui lòng đợi...</p>
+        <p class="text-lg font-bold text-blue-400">Đang tải dữ liệu ứng dụng...</p>
     </div>
 
-
-
-    <main class="max-w-7xl mx-auto px-6">
-        <section class="mb-10 bg-gray-800/60 border border-gray-700 rounded-2xl overflow-hidden shadow-xl">
-
+    <div class="flex flex-1 w-full h-full gap-6 overflow-hidden">
+        
+        <aside class="w-1/4 bg-gray-800/50 border border-gray-700/60 rounded-2xl p-4 flex flex-col overflow-y-auto custom-scrollbar">
+            <div class="mb-6 px-2">
+                <h1 class="text-2xl font-black text-blue-400 tracking-wide uppercase">KHO ATV</h1>
+                <p class="text-xs text-gray-400 mt-1">Hỗ trợ điều khiển Remote</p>
+            </div>
             
-            <div id="guide-content" class="subcontent-transition max-h-0 opacity-0 bg-gray-800">
-                <div id="guide-list-container" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-700">
+            <nav id="sidebar-menu" class="space-y-2 flex-1"></nav>
+        </aside>
+
+        <main class="flex-1 bg-gray-800/20 border border-gray-800/40 rounded-2xl p-6 flex flex-col overflow-hidden">
+            <h2 id="current-category-title" class="text-2xl font-bold text-gray-100 mb-6 border-b border-gray-700 pb-3 flex items-center gap-2">
+                ...
+            </h2>
+            
+            <div id="apps-grid-view" class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
                     </div>
             </div>
-        </section>
+        </main>
 
-        <section id="main-content" class="space-y-6"></section>
-    </main>
+    </div>
 
     <script>
         const WORKER_URL = "https://twilight-water-52c0.nguyentuanhihihi.workers.dev/"; 
         const R2_PUBLIC_URL = "https://pub-f2fd372ec0c34231b4e0a24526bdb379.r2.dev"; 
 
-        const MAIN_CONTENT = document.getElementById('main-content');
+        const SIDEBAR_MENU = document.getElementById('sidebar-menu');
+        const APPS_GRID = document.getElementById('apps-grid');
+        const CAT_TITLE = document.getElementById('current-category-title');
         const LOADING_OVERLAY = document.getElementById('loading-overlay');
         
         let appDataStructure = {};
@@ -86,10 +103,10 @@
 
         async function init() {
             await fetchLatestData();
-            // Tự động focus vào mục đầu tiên trên màn hình sau khi tải xong để remote ăn liền
+            // Tự động focus vào mục đầu tiên của Menu để ăn Remote ngay lập tức
             setTimeout(() => {
-                const firstFocusable = document.querySelector('.tv-focusable');
-                if(firstFocusable) firstFocusable.focus();
+                const firstMenuBtn = SIDEBAR_MENU.querySelector('.tv-focusable');
+                if (firstMenuBtn) firstMenuBtn.focus();
             }, 500);
         }
 
@@ -100,7 +117,7 @@
                 processAndRender(data);
             } catch (err) {
                 console.error(err);
-                MAIN_CONTENT.innerHTML = '<p class="text-red-500 text-2xl font-bold p-10 text-center bg-gray-800 rounded-2xl">Lỗi kết nối máy chủ dữ liệu!</p>';
+                document.getElementById('apps-grid-view').innerHTML = '<p class="text-red-500 text-xl font-bold p-10 text-center bg-gray-800 rounded-2xl">Lỗi kết nối máy chủ dữ liệu!</p>';
             } finally {
                 LOADING_OVERLAY.style.opacity = '0';
                 setTimeout(() => LOADING_OVERLAY.classList.add('hidden'), 300);
@@ -149,188 +166,156 @@
             renderInterface();
         }
 
-        function renderGuides() {
-            const container = document.getElementById('guide-list-container');
-            container.innerHTML = '';
-
-            guidesData.forEach(guide => {
-                const hrefUrl = guide.url && guide.url.trim() !== "" ? guide.url : "#";
-                const guideItem = document.createElement('a');
-                guideItem.href = hrefUrl;
-                guideItem.className = "tv-focusable block bg-gray-700/50 hover:bg-gray-700 p-4 rounded-xl flex items-center space-x-4 border border-gray-600";
-                
-                guideItem.innerHTML = `
-                    <span class="text-blue-400 text-2xl">👉</span>
-                    <span class="text-lg font-bold text-gray-200 truncate">${guide.text}</span>
-                `;
-                container.appendChild(guideItem);
-            });
-        }
-
         function getFolderName(slug) {
             return folderFriendlyNames[slug] || slug.toUpperCase().replace(/_/g, ' ');
         }
 
-     
-	 
-	 
-	 function renderInterface() {
-    MAIN_CONTENT.innerHTML = "";
-    renderGuides();
-
-    // 1. Tạo thanh Tabs (Phần khoanh đỏ)
-    const tabContainer = document.createElement('div');
-    tabContainer.className = "flex overflow-x-auto space-x-6 pb-4 mb-8 border-b border-gray-700";
-    
-    const categories = Object.keys(appDataStructure);
-    
-    categories.forEach((catSlug, index) => {
-        const btn = document.createElement('button');
-        btn.className = `tv-focusable text-xl font-bold text-gray-400 py-2 px-2 whitespace-nowrap ${index === 0 ? 'tab-active' : ''}`;
-        btn.innerText = getFolderName(catSlug);
-        
-        // Khi chọn Tab thì render lại nội dung
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-active').forEach(el => el.classList.remove('tab-active'));
-            btn.classList.add('tab-active');
-            renderAppContent(catSlug);
-        };
-        tabContainer.appendChild(btn);
-    });
-    
-    MAIN_CONTENT.appendChild(tabContainer);
-
-    // Vùng chứa App
-    const appContainer = document.createElement('div');
-    appContainer.id = "app-container-view";
-    MAIN_CONTENT.appendChild(appContainer);
-
-    // Render mặc định tab đầu tiên
-    renderAppContent(categories[0]);
-}
-
-function renderAppContent(catSlug) {
-    const container = document.getElementById('app-container-view');
-    container.innerHTML = "";
-    
-    const catData = appDataStructure[catSlug];
-    const grid = document.createElement('div');
-    grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
-    
-    // Gộp cả file gốc và file trong thư mục con vào 1 danh sách để hiện chung
-    let allApps = [...catData._files];
-    Object.values(catData._subs).forEach(subList => allApps.push(...subList));
-    
-    allApps.forEach(file => {
-        grid.appendChild(createAppCard(file));
-    });
-    
-    container.appendChild(grid);
-}
-
-        // BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
-// BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
-function createAppCard(file) {
-    const rawFileName = file.key.split('/').pop();
-    const defaultName = rawFileName.replace(/\.apk$/i, '').replace(/_/g, ' ');
-    const cleanName = fileFriendlyNames[file.key] || defaultName;
-    
-    const initialLetter = cleanName.trim().charAt(0).toUpperCase();
-    let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(initialLetter)}&background=1e293b&color=38bdf8&bold=true&size=128`;
-    if (iconMapping[file.key]) avatarUrl = `${R2_PUBLIC_URL}/${iconMapping[file.key]}`;
-    
-    const fileCode = codeMapping[file.key] || "K có";
-    const fileUrl = `${R2_PUBLIC_URL}/${file.key}`;
-
-    const linkCard = document.createElement('a');
-    linkCard.className = "tv-focusable block bg-gray-800 border border-gray-600 rounded-2xl p-4 flex items-center justify-between shadow-lg cursor-pointer";
-    linkCard.setAttribute('tabindex', '0');
-    linkCard.innerHTML = `
-        <div class="flex items-center space-x-4 min-w-0 flex-1">
-            <img src="${avatarUrl}" class="w-14 h-14 rounded-xl shadow-inner object-cover" alt="Icon">
-            <div class="min-w-0 flex-1">
-                <h3 class="text-xl font-bold text-gray-100 truncate">${cleanName}</h3>
-                <p class="text-sm text-gray-400 mt-1 font-mono">CODE: <span class="text-yellow-400 font-bold">${fileCode}</span></p>
-            </div>
-        </div>
-        <div class="text-blue-500 pl-3">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        </div>
-    `;
-
-    // SỬA CHỖ NÀY: Ép nhảy link trực tiếp để file Java (LauncherActivity.java) bắt chặn
-    linkCard.addEventListener('click', function() {
-        window.location.href = fileUrl;
-    });
-
-    return linkCard;
-}
-
-
-
-
-
-
-
-
-
-        // HÀM MỞ THƯ MỤC
-        function toggleAccordion(contentId, arrowId) {
-            const content = document.getElementById(contentId);
-            const arrow = document.getElementById(arrowId);
-            const isOpening = !(content.style.maxHeight && content.style.maxHeight !== '0px');
-
-            document.querySelectorAll('.root-accordion-content').forEach(el => { el.style.maxHeight = '0px'; el.style.opacity = '0'; });
-            document.querySelectorAll('[id^="arrow-"]').forEach(el => el.classList.remove('rotate-180'));
+        // TẠO GIAO DIỆN CHÍNH 2 CỘT
+        function renderInterface() {
+            SIDEBAR_MENU.innerHTML = "";
             
-            const guide = document.getElementById('guide-content');
-            if (guide) { guide.style.maxHeight = '0px'; guide.style.opacity = '0'; document.getElementById('guide-arrow').classList.remove('rotate-180'); }
-
-            if (isOpening) {
-                content.style.maxHeight = content.scrollHeight + '1000px'; // Mở rộng rãi cho file load
-                content.style.opacity = '1';
-                arrow.classList.add('rotate-180');
-                setTimeout(() => { content.style.maxHeight = 'none'; }, 300);
-            }
-        }
-
-        function toggleGuideAccordion() {
-            const content = document.getElementById('guide-content');
-            const arrow = document.getElementById('guide-arrow');
-            const isOpening = !(content.style.maxHeight && content.style.maxHeight !== '0px');
-
-            document.querySelectorAll('.root-accordion-content').forEach(el => { el.style.maxHeight = '0px'; el.style.opacity = '0'; });
-            document.querySelectorAll('[id^="arrow-"]').forEach(el => el.classList.remove('rotate-180'));
-
-            if (isOpening) {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                content.style.opacity = '1';
-                arrow.classList.add('rotate-180');
-            } else {
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                arrow.classList.remove('rotate-180');
-            }
-        }
-
-        function toggleSubAccordion(subContentId, subArrowId, parentSlug) {
-            const content = document.getElementById(subContentId);
-            const arrow = document.getElementById(subArrowId);
-            const isOpening = !(content.style.maxHeight && content.style.maxHeight !== '0px');
-
-            document.querySelectorAll(`.sub-accordion-content[data-parent="${parentSlug}"]`).forEach(el => {
-                el.style.maxHeight = '0px'; el.style.opacity = '0';
-                document.getElementById(el.id.replace('subcontent-', 'subarrow-')).classList.remove('rotate-180');
+            // 1. Tạo mục Hướng Dẫn Sử Dụng đầu tiên trên Menu
+            createMenuButton("guides-menu-item", "📖 Hướng Dẫn Sử Dụng", () => {
+                renderGuidesContent();
             });
 
-            if (isOpening) {
-                content.style.maxHeight = content.scrollHeight + '1000px';
-                content.style.opacity = '1';
-                arrow.classList.add('rotate-180');
-                const parentAccordion = content.closest('.root-accordion-content');
-                if (parentAccordion && parentAccordion.style.maxHeight !== 'none') parentAccordion.style.maxHeight = 'none';
-                setTimeout(() => { content.style.maxHeight = 'none'; }, 300);
+            // 2. Lấy danh sách các Thư mục Ứng dụng
+            let categories = Object.keys(appDataStructure);
+            
+            // Nếu có cấu hình sắp xếp thư mục custom, áp dụng nó
+            if (folderCustomOrder && folderCustomOrder.length > 0) {
+                categories.sort((a, b) => {
+                    let indexA = folderCustomOrder.indexOf(a);
+                    let indexB = folderCustomOrder.indexOf(b);
+                    if (indexA === -1) indexA = 999;
+                    if (indexB === -1) indexB = 999;
+                    return indexA - indexB;
+                });
             }
+
+            // Sinh các nút Menu cho Thư mục ứng dụng
+            categories.forEach(catSlug => {
+                const prettyName = getFolderName(catSlug);
+                createMenuButton(`cat-${catSlug}`, `📁 ${prettyName}`, () => {
+                    renderAppContent(catSlug);
+                });
+            });
+        }
+
+        // HÀM TẠO NÚT MENU Ở CỘT TRÁI (TỐI ƯU SỰ KIỆN FOCUS REMOTE)
+        function createMenuButton(id, text, loadContentFn) {
+            const btn = document.createElement('button');
+            btn.id = id;
+            btn.className = "tv-focusable w-full text-left text-lg font-bold text-gray-400 py-3 px-4 rounded-xl transition-all block truncate";
+            btn.innerText = text;
+
+            // KHI DI CHUYỂN REMOTE TỚI (FOCUS): Tự động nạp dữ liệu sang phải luôn, không cần nhấn OK
+            btn.onfocus = () => {
+                document.querySelectorAll('.menu-active').forEach(el => el.classList.remove('menu-active'));
+                btn.classList.add('menu-active');
+                loadContentFn();
+            };
+
+            // KHI NHẤN OK (CLICK): Nhảy nhanh focus sang app đầu tiên ở cột phải cho tiện
+            btn.onclick = () => {
+                loadContentFn();
+                setTimeout(() => {
+                    const firstAppCard = APPS_GRID.querySelector('.tv-focusable');
+                    if (firstAppCard) firstAppCard.focus();
+                }, 100);
+            };
+
+            SIDEBAR_MENU.appendChild(btn);
+        }
+
+        // RENDER NỘI DUNG MỤC HƯỚNG DẪN
+        function renderGuidesContent() {
+            CAT_TITLE.innerHTML = `<span>📖</span> Hướng Dẫn Sử Dụng`;
+            APPS_GRID.innerHTML = "";
+
+            if (guidesData.length === 0) {
+                APPS_GRID.innerHTML = '<p class="text-gray-500 italic col-span-full p-4">Không có hướng dẫn nào.</p>';
+                return;
+            }
+
+            guidesData.forEach(guide => {
+                const hrefUrl = guide.url && guide.url.trim() !== "" ? guide.url : "#";
+                const card = document.createElement('a');
+                card.href = hrefUrl;
+                card.className = "tv-focusable block bg-gray-800 border border-gray-700/60 rounded-xl p-4 flex items-center space-x-4 shadow-md cursor-pointer";
+                card.setAttribute('tabindex', '0');
+                card.innerHTML = `
+                    <span class="text-blue-400 text-2xl flex-shrink-0">👉</span>
+                    <span class="text-base font-bold text-gray-200 truncate">${guide.text}</span>
+                `;
+                
+                // Đồng bộ chuyển hướng hoặc kích hoạt khi bấm trên Android TV
+                card.addEventListener('click', function(e) {
+                    if (hrefUrl !== "#") window.location.href = hrefUrl;
+                });
+
+                APPS_GRID.appendChild(card);
+            });
+        }
+
+        // RENDER NỘI DUNG CÁC APP TRONG THƯ MỤC
+        function renderAppContent(catSlug) {
+            const catData = appDataStructure[catSlug];
+            CAT_TITLE.innerHTML = `<span>📁</span> ${getFolderName(catSlug)}`;
+            APPS_GRID.innerHTML = "";
+            
+            // Gộp cả file gốc và file trong thư mục con vào chung 1 danh sách hiển thị dạng lưới
+            let allApps = [...catData._files];
+            Object.values(catData._subs).forEach(subList => allApps.push(...subList));
+            
+            if (allApps.length === 0) {
+                APPS_GRID.innerHTML = '<p class="text-gray-500 italic col-span-full p-4">Thư mục này hiện chưa có ứng dụng.</p>';
+                return;
+            }
+
+            allApps.forEach(file => {
+                APPS_GRID.appendChild(createAppCard(file));
+            });
+        }
+
+        // BIẾN THẺ APP THÀNH MỘT NÚT BẤM DÀNH CHO TIVI (ĐỂ JAVA CHẶN TẢI XUỐNG)
+        function createAppCard(file) {
+            const rawFileName = file.key.split('/').pop();
+            const defaultName = rawFileName.replace(/\.apk$/i, '').replace(/_/g, ' ');
+            const cleanName = fileFriendlyNames[file.key] || defaultName;
+            
+            const initialLetter = cleanName.trim().charAt(0).toUpperCase();
+            let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(initialLetter)}&background=1e293b&color=38bdf8&bold=true&size=128`;
+            if (iconMapping[file.key]) avatarUrl = `${R2_PUBLIC_URL}/${iconMapping[file.key]}`;
+            
+            const fileCode = codeMapping[file.key] || "K có";
+            const fileUrl = `${R2_PUBLIC_URL}/${file.key}`;
+
+            const linkCard = document.createElement('a');
+            linkCard.className = "tv-focusable block bg-gray-800 border border-gray-700/60 rounded-2xl p-4 flex items-center justify-between shadow-lg cursor-pointer";
+            linkCard.setAttribute('tabindex', '0');
+            linkCard.innerHTML = `
+                <div class="flex items-center space-x-4 min-w-0 flex-1">
+                    <img src="${avatarUrl}" class="w-12 h-12 rounded-xl shadow-inner object-cover flex-shrink-0" alt="Icon">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-bold text-gray-100 truncate">${cleanName}</h3>
+                        <p class="text-xs text-gray-400 mt-1 font-mono">CODE: <span class="text-yellow-400 font-bold">${fileCode}</span></p>
+                    </div>
+                </div>
+                <div class="text-blue-400 pl-2 flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </div>
+            `;
+
+            // Ép nhảy link trực tiếp để code Java (LauncherActivity.java) bắt được link tải
+            linkCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = fileUrl;
+            });
+
+            return linkCard;
         }
 
         window.onload = init;
