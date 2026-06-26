@@ -174,40 +174,49 @@
      
 	 
 	 
+	 
+	 
+	 
+	 
+	 
+	 
 	 function renderInterface() {
     MAIN_CONTENT.innerHTML = "";
     renderGuides();
 
-    // 1. Tạo thanh Tabs (Phần khoanh đỏ)
-    const tabContainer = document.createElement('div');
-    tabContainer.className = "flex overflow-x-auto space-x-6 pb-4 mb-8 border-b border-gray-700";
-    
     const categories = Object.keys(appDataStructure);
     
-    categories.forEach((catSlug, index) => {
-        const btn = document.createElement('button');
-        btn.className = `tv-focusable text-xl font-bold text-gray-400 py-2 px-2 whitespace-nowrap ${index === 0 ? 'tab-active' : ''}`;
-        btn.innerText = getFolderName(catSlug);
+    categories.forEach((catSlug) => {
+        // Tạo một container cho mỗi thư mục
+        const folderSection = document.createElement('div');
+        folderSection.className = "mb-8";
         
-        // Khi chọn Tab thì render lại nội dung
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-active').forEach(el => el.classList.remove('tab-active'));
-            btn.classList.add('tab-active');
-            renderAppContent(catSlug);
-        };
-        tabContainer.appendChild(btn);
+        // Tên thư mục (Tiêu đề nhóm)
+        const title = document.createElement('h2');
+        title.className = "text-2xl font-bold text-blue-400 mb-4 px-2 border-l-4 border-blue-500 pl-4";
+        title.innerText = getFolderName(catSlug);
+        folderSection.appendChild(title);
+
+        // Vùng chứa app (Thay vì tabs ngang, mình cho nó nằm ngay dưới tiêu đề)
+        const grid = document.createElement('div');
+        grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4";
+        
+        const catData = appDataStructure[catSlug];
+        let allApps = [...catData._files];
+        Object.values(catData._subs).forEach(subList => allApps.push(...subList));
+        
+        allApps.forEach(file => {
+            grid.appendChild(createAppCard(file));
+        });
+        
+        folderSection.appendChild(grid);
+        MAIN_CONTENT.appendChild(folderSection);
     });
-    
-    MAIN_CONTENT.appendChild(tabContainer);
-
-    // Vùng chứa App
-    const appContainer = document.createElement('div');
-    appContainer.id = "app-container-view";
-    MAIN_CONTENT.appendChild(appContainer);
-
-    // Render mặc định tab đầu tiên
-    renderAppContent(categories[0]);
 }
+	 
+	 
+	 
+	 
 
 function renderAppContent(catSlug) {
     const container = document.getElementById('app-container-view');
