@@ -4,36 +4,54 @@
 	<link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
     <title>Kho Ứng Dụng ATV</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-       /* Layout chia 2 cột: Trái (Menu) 30% - Phải (App) 70% */
-    .tv-container { display: flex; height: 80vh; gap: 20px; }
-    .menu-side { width: 300px; flex-shrink: 0; overflow-y: auto; padding: 10px; border-right: 1px solid #374151; }
-    .content-side { flex-grow: 1; overflow-y: auto; padding: 10px; }
-    
-    /* Style cho mục menu */
-    .menu-item {
-        padding: 15px; margin-bottom: 10px; border-radius: 10px;
-        background: #1f2937; color: #9ca3af; font-weight: bold;
-        transition: all 0.2s;
-    }
-    .menu-item:focus { background: #3b82f6; color: white; transform: scale(1.02); }
+        /* TỐI ƯU GIAO DIỆN DÀNH RIÊNG CHO TIVI */
+        body { 
+            font-family: "Segoe UI", Roboto, Arial, sans-serif; 
+            background-color: #0f172a; /* Nền tối dịu mắt cho TV */
+            color: #f3f4f6; 
+            overflow-x: hidden;
+        }
+        .tab-active { border-bottom: 3px solid #3b82f6; color: #60a5fa !important; }
+        .subcontent-transition { transition: max-height 0.3s ease-out, opacity 0.2s ease-out; overflow: hidden; }
+        #loading-overlay { backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+        .rotate-180 { transform: rotate(180deg); }
+
+        /* HIỆU ỨNG KHI DÙNG REMOTE CHỌN TRÚNG (FOCUS) - QUAN TRỌNG NHẤT */
+        .tv-focusable {
+            transition: all 0.2s ease-in-out;
+            outline: none; /* Bỏ viền mặc định xấu xí của trình duyệt */
+        }
+        
+        .tv-focusable:focus {
+            transform: scale(1.05);
+            border-color: #3b82f6 !important;
+            background-color: #1e3a8a !important; /* Xanh dương đậm tỏa sáng */
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.8) !important;
+            z-index: 10;
+        }
+
+        .tv-focusable:focus * {
+            color: #ffffff !important;
+        }
+
+        /* Ẩn thanh cuộn cho đẹp trên TV */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
-	
 </head>
 <body class="min-h-screen pb-16">
 
-    <<div class="tv-container">
-    <!-- Cột Menu Trái -->
-    <div id="menu-side" class="menu-side"></div>
-    
-    <!-- Cột Nội dung Phải -->
-    <div id="content-side" class="content-side"></div>
-</div>
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90">
+        <svg class="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-lg font-bold text-blue-400">Đang tải dữ liệu, vui lòng đợi...</p>
     </div>
 
 
@@ -159,53 +177,7 @@
 	 
 	 
 	 
-	 
-	 
-	 
-function renderInterface() {
-    const menuSide = document.getElementById('menu-side');
-    menuSide.innerHTML = "";
-    const categories = Object.keys(appDataStructure);
-    
-    categories.forEach((catSlug, index) => {
-        const btn = document.createElement('button');
-        btn.className = "tv-focusable menu-item w-full text-left";
-        btn.innerText = getFolderName(catSlug);
-        btn.setAttribute('tabindex', '0');
-        
-        btn.onfocus = () => {
-            renderAppContent(catSlug);
-        };
-        
-        menuSide.appendChild(btn);
-    });
 
-    // MỚI: Tự động focus vào nút đầu tiên sau khi tạo xong
-    if (categories.length > 0) {
-        const firstBtn = menuSide.querySelector('.menu-item');
-        if (firstBtn) {
-            firstBtn.focus(); // Cái này sẽ kích hoạt luôn hàm renderAppContent
-        }
-    }
-}
-
-function renderAppContent(catSlug) {
-    const container = document.getElementById('content-side');
-    container.innerHTML = `<h2 class="text-2xl font-bold mb-4 text-blue-400">${getFolderName(catSlug)}</h2>`;
-    const grid = document.createElement('div');
-    grid.className = "grid grid-cols-2 gap-4"; // Cột phải chia lưới 2
-    
-    const catData = appDataStructure[catSlug];
-    let allApps = [...catData._files];
-    Object.values(catData._subs).forEach(subList => allApps.push(...subList));
-    
-    allApps.forEach(file => grid.appendChild(createAppCard(file)));
-    container.appendChild(grid);
-}
-	 
-	 
-	 
-	 
 
 function renderAppContent(catSlug) {
     const container = document.getElementById('app-container-view');
