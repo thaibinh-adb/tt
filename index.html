@@ -335,25 +335,29 @@ function createAppCard(file) {
 
         window.onload = init;
 		// BẮT SỰ KIỆN NÚT ĐIỀU KHIỂN REMOTE ĐỂ XỬ LÝ CHUYỂN CỘT
+       
+	   
+	   
+	   // BẮT SỰ KIỆN PHÍM TRÁI ĐỂ QUAY LẠI MENU CHO BOX ANDROID 12
         document.addEventListener('keydown', function(e) {
-            // Nút D-pad TRÁI (keyCode 37)
             if (e.key === 'ArrowLeft' || e.keyCode === 37) {
-                // Kiểm tra xem người dùng có đang focus ở cột bên phải (danh sách app) không
-                if (document.activeElement && document.activeElement.closest('#apps-grid-view')) {
-                    e.preventDefault(); // Chặn hành vi cuộn mặc định của WebView
+                // Nếu đang focus ở trong vùng danh sách ứng dụng
+                if (document.activeElement && document.activeElement.closest('#app-container-view')) {
+                    e.preventDefault(); // Chặn hành vi cuộn mặc định của trình duyệt
                     
-                    // Tìm cái menu bên trái đang được chọn và ép focus về nó
-                    const activeMenu = document.querySelector('.menu-active');
-                    if (activeMenu) {
-                        activeMenu.focus();
+                    // Tìm cái Tab/Thư mục đang active ở phía trên để ép focus về nó
+                    const activeTab = document.querySelector('.tab-active');
+                    if (activeTab) {
+                        activeTab.focus();
                     } else {
-                        // Nếu lỡ không tìm thấy thì ép về nút đầu tiên
-                        const firstMenu = document.querySelector('#sidebar-menu .tv-focusable');
-                        if (firstMenu) firstMenu.focus();
+                        // Phòng hờ không thấy tab-active thì ép về thằng đầu tiên
+                        const firstTab = document.querySelector('.tab-item');
+                        if (firstTab) firstTab.focus();
                     }
                 }
             }
         });
+	   
     </script>
 </body>
 </html>
