@@ -243,6 +243,7 @@ function renderAppContent(catSlug) {
 }
 
         // BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
+// BIẾN THẺ APP THÀNH MỘT NÚT BẤM (LINK TẢI) DÀNH CHO TIVI
 function createAppCard(file) {
     const rawFileName = file.key.split('/').pop();
     const defaultName = rawFileName.replace(/\.apk$/i, '').replace(/_/g, ' ');
@@ -271,21 +272,22 @@ function createAppCard(file) {
         </div>
     `;
 
-    // SỬA CHỖ NÀY: Bắt sự kiện khi bấm OK trên remote TV hoặc click chuột
-    linkCard.addEventListener('click', function(e) {
-        e.preventDefault(); // Chặn hành vi mở link mặc định của thẻ a
-        
-        if (window.AndroidInstaller) {
-            // Nếu đang chạy bên trong App TV của bồ, ép nó tải ngầm và tự bật cài đặt
-            window.AndroidInstaller.downloadAndInstall(fileUrl);
-        } else {
-            // Nếu đang xem bằng trình duyệt web bình thường (Chrome, Safari...) thì tải như cũ
-            window.location.href = fileUrl;
-        }
+    // SỬA CHỖ NÀY: Ép nhảy link trực tiếp để file Java (LauncherActivity.java) bắt chặn
+    linkCard.addEventListener('click', function() {
+        window.location.href = fileUrl;
     });
 
     return linkCard;
 }
+
+
+
+
+
+
+
+
+
         // HÀM MỞ THƯ MỤC
         function toggleAccordion(contentId, arrowId) {
             const content = document.getElementById(contentId);
