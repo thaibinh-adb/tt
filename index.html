@@ -333,6 +333,36 @@ function createAppCard(file) {
             }
         }
 
+
+
+// MA THUẬT ÉP ĐIỀU HƯỚNG CHO ROM COOK
+        document.addEventListener('keydown', function(e) {
+            const currentFocus = document.activeElement;
+            
+            // Nếu đang đứng ở thanh Menu ngang (Thư mục)
+            if (currentFocus && currentFocus.parentElement && currentFocus.parentElement.classList.contains('overflow-x-auto')) {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault(); // Chặn hệ thống tự xử lý
+                    const nextTab = currentFocus.nextElementSibling;
+                    if (nextTab && nextTab.classList.contains('tv-focusable')) {
+                        nextTab.focus();
+                    }
+                }
+                else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prevTab = currentFocus.previousElementSibling;
+                    if (prevTab && prevTab.classList.contains('tv-focusable')) {
+                        prevTab.focus();
+                    }
+                }
+                else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    // Nhảy thẳng xuống ô App đầu tiên
+                    const firstApp = document.querySelector('#app-container-view .tv-focusable');
+                    if (firstApp) firstApp.focus();
+                }
+            }
+        });
         window.onload = init;
     </script>
 </body>
